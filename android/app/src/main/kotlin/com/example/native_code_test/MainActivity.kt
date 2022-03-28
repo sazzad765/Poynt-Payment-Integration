@@ -1,5 +1,6 @@
 package com.example.native_code_test
 
+import ProductItem
 import android.content.ActivityNotFoundException
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -9,6 +10,7 @@ import androidx.annotation.NonNull
 import co.poynt.os.model.Intents
 import co.poynt.os.model.Payment
 import co.poynt.os.model.PaymentStatus
+import com.example.native_code_test.java_class.CommonUtil
 import com.google.gson.Gson
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -19,37 +21,38 @@ import java.util.*
 
 class MainActivity : FlutterActivity() {
     private val COLLECT_PAYMENT_REQUEST = 13132
-    var mResult:  MethodChannel.Result? = null
+    var mResult: MethodChannel.Result? = null
 
     private val CHANNEL = "smsAggregationChannel"
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            CHANNEL
+        ).setMethodCallHandler { call, result ->
             mResult = result
 
             if (call.method == "startAggregation") {
                 val arg1: String? = call.argument("arg1");
-                val arg2: String? = call.argument("arg2");
+
                 Log.d(
                     TAG,
                     "Received arg1("
-                            + arg1)
-//                Gson().fromJson(arg1, Array<Product>::class.java).asList();
+                            + arg1
+                )
 
-                Gson() .fromJson(arg1, Array<Product>::class.java).asList()
+                val products: List<ProductItem> =
+                    Gson().fromJson(arg1, Array<ProductItem>::class.java).asList();
+//                    Gson().fromJson(arg1, Product::class.java)\
+                for (product in products) {
+                    Log.d(
+                        TAG,
+                        "Received onPaymentAction("
+                                + product
+                    );
+                }
 
-                val topic: List<Product> =  Gson().fromJson(arg1, Array<Product>::class.java).asList();
-//                    Gson().fromJson(arg1, Product::class.java)
-
-//
-                Log.d(
-                    TAG,
-                    "Received onPaymentAction("
-                            + topic);
-
-
-//                var jsonarray_info:JSONArray= json_contact.getJSONArray(call.argument("arg1"));
-                launchPoyntPayment(10, result);
+                launchPoyntPayment(10, result,products);
 
 //                result.success(arg1 + ", " + arg2);
 //                startNewActivity(arg1, arg1); // Method to start the SDK
@@ -57,13 +60,20 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun launchPoyntPayment(amount: Long, result: MethodChannel.Result) {
+    private fun launchPoyntPayment(
+        amount: Long,
+        result: MethodChannel.Result,
+        products: List<ProductItem>
+    ) {
         val currencyCode = NumberFormat.getCurrencyInstance().currency.currencyCode
         val payment = Payment()
-        val referenceId = UUID.randomUUID().toString()
-        payment.referenceId = referenceId
-        payment.amount = amount
+        val referenceId = UUID.randomUUID()
+        payment.referenceId = referenceId.toString()
+        payment.amount =  CommonUtil.dollarsToCents(amount.toDouble())
         payment.currency = currencyCode
+        payment.order = PoyntUtils().generateOrder(products,10 )
+        payment.isAutoPrintReceipt = true
+        payment.notes=" APTX POS"
 
 
         // default to cash if the device has no card reader
@@ -92,7 +102,6 @@ class MainActivity : FlutterActivity() {
         // Check which request we're responding to
         if (requestCode == COLLECT_PAYMENT_REQUEST) {
             // Make sure the request was successful
-
 
 
             if (resultCode == RESULT_OK) {

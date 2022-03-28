@@ -57,8 +57,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    products.add(Product(productName: 'Product', unitPrice: 9.0, discount: 0.9, quantity: 3, tax: 0.6, unitOfMeasure: 0.1));
-    products.add(Product(productName: 'Product', unitPrice: 9.0, discount: 0.9, quantity: 3, tax: 0.6, unitOfMeasure: 0.1));
+    products.add(Product(productName: 'Product', unitPrice: 9.0, discount: 2.0, quantity: 3, tax: 2, unitOfMeasure: 1));
+    products.add(Product(productName: 'Product2', unitPrice: 9.0, discount: 2.0, quantity: 3, tax: 2, unitOfMeasure: 1));
     super.initState();
   }
   @override
@@ -73,13 +73,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _startAggregation() async {
     try {
 
-      const String arg2 = "<arg2>";
-      print('------------- ${products.map((e) => e.toJson()).toString()}');
-
       await platform.invokeMethod('startAggregation', {// start the aggregation with args
         'arg1': json.encode(products),
-      //  'arg1': products.map((e) => e.toJson()).toString(),
-        'arg2': arg2
+      //  'arg1': products.map((e) => e.toJson()).toString()
       }).then((value) {
         print(value.toString());
       });

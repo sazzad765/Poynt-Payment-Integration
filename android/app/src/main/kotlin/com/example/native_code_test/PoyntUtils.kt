@@ -1,5 +1,6 @@
 package com.example.native_code_test
 
+import ProductItem
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import co.poynt.api.model.*
@@ -59,7 +60,7 @@ class PoyntUtils {
     }
 
     fun generateOrder(
-        salesOrderList: HashMap<Int?, Product>,
+        salesOrderList: List<ProductItem>,
 //        extraChargeSalesModel: CartExtraChargeSalesModel,
         refNumber: Int
     ): Order? {
@@ -70,17 +71,17 @@ class PoyntUtils {
         // create some dummy items to display in second screen
         items = ArrayList()
         var subTotal: Long = 0
-        for ((_, orderSalesModel) in salesOrderList) {
+        for ( orderSalesModel in salesOrderList) {
             val item = OrderItem()
-            item.name = orderSalesModel.getProductName()
-            item.unitPrice = CommonUtil.dollarsToCents(orderSalesModel.getUnitPrice())
-            item.discount = CommonUtil.dollarsToCents(orderSalesModel.getDiscount())
-            item.quantity = orderSalesModel.getQuantity()
+            item.name = orderSalesModel.product_name
+            item.unitPrice = CommonUtil.dollarsToCents(orderSalesModel.unit_price)
+            item.discount = CommonUtil.dollarsToCents(orderSalesModel.discount)
+            item.quantity = orderSalesModel.quantity.toFloat()
             item.unitOfMeasure = UnitOfMeasure.EACH
             item.status = OrderItemStatus.FULFILLED
-            item.tax = CommonUtil.dollarsToCents(orderSalesModel.getTax())
+            item.tax = CommonUtil.dollarsToCents(orderSalesModel.tax)
             items.add(item)
-            subTotal += BigDecimal(orderSalesModel.getUnitPrice()).setScale(
+            subTotal += BigDecimal(orderSalesModel.unit_price*orderSalesModel.quantity).setScale(
                 0,
                 RoundingMode.HALF_UP
             ).toLong()
@@ -109,14 +110,14 @@ class PoyntUtils {
 //        order.fees = fees
         val amounts = OrderAmounts()
         amounts.currency = "USD"
-        amounts.subTotal = subTotal
-        amounts.netTotal = subTotal
+        amounts.subTotal = CommonUtil.dollarsToCents(subTotal.toDouble())
+        amounts.netTotal = CommonUtil.dollarsToCents(subTotal.toDouble())
         var discAmount: Long = 0
         for (item in items) {
             discAmount -= item.discount
         }
         amounts.discountTotal = discAmount
-//        amounts.taxTotal = CommonUtil.dollarsToCents(extraChargeSalesModel.getTotalTax())
+        amounts.taxTotal = CommonUtil.dollarsToCents(4.0)
         var feeAmount: Long = 0
         for (item in items) {
             if (item.fee != null) {
@@ -140,6 +141,8 @@ class PoyntUtils {
         order.statuses = orderStatuses
         order.id = UUID.randomUUID()
         order.items = items
+
+        order.notes= "APTX POS"
         return order
     }
 
