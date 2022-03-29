@@ -52,7 +52,7 @@ class MainActivity : FlutterActivity() {
                     );
                 }
 
-                launchPoyntPayment(10, result,products);
+                launchPoyntPayment(10, result, products);
 
 //                result.success(arg1 + ", " + arg2);
 //                startNewActivity(arg1, arg1); // Method to start the SDK
@@ -69,11 +69,12 @@ class MainActivity : FlutterActivity() {
         val payment = Payment()
         val referenceId = UUID.randomUUID()
         payment.referenceId = referenceId.toString()
-        payment.amount =  CommonUtil.dollarsToCents(amount.toDouble())
+        payment.amount = CommonUtil.dollarsToCents(amount.toDouble())
         payment.currency = currencyCode
-        payment.order = PoyntUtils().generateOrder(products,10 )
+        payment.order = PoyntUtils().generateOrder(products, 10)
         payment.isAutoPrintReceipt = true
-        payment.notes=" APTX POS"
+        payment.notes = " APTX POS"
+        payment.isCashOnly = true
 
 
         // default to cash if the device has no card reader
@@ -107,11 +108,17 @@ class MainActivity : FlutterActivity() {
             if (resultCode == RESULT_OK) {
                 if (data != null) {
                     val payment: Payment? = data.getParcelableExtra(Intents.INTENT_EXTRAS_PAYMENT)
-                    mResult!!.success(payment)
+                    mResult!!.success(Gson().toJson(payment))
                     Log.d(
                         TAG,
                         "Received onPaymentAction from PaymentFragment w/ Status("
                                 + payment!!.status + ")"
+                    )
+
+                    Log.d(
+                        TAG,
+                        "Received "
+                                + payment
                     )
                     if (payment.status == PaymentStatus.COMPLETED) {
                         Toast.makeText(this, "Payment Completed", Toast.LENGTH_LONG).show()
@@ -130,8 +137,11 @@ class MainActivity : FlutterActivity() {
                     }
                 }
             } else if (resultCode == RESULT_CANCELED) {
+                mResult!!.success(null)
                 Toast.makeText(this, "Payment Canceled", Toast.LENGTH_LONG).show()
             }
+        }else{
+            mResult!!.success(null)
         }
     }
 

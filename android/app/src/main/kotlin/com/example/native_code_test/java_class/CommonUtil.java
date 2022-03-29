@@ -20,9 +20,7 @@ import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-/**
- * Contains common utilities for the app
- */
+
 public class CommonUtil {
     private static ProgressDialog mProgressDialog;
     private static CommonUtil commonUtil;
